@@ -1,910 +1,83 @@
 
-
 /* ============================================================
-   BITEBOX JAVASCRIPT
-============================================================ */
-
-console.log("BiteBox Javascript is working now!!!");
-
-let restaurantName = "BiteBox";
-
-
-/* ============================================================
-   CART DATA
-============================================================ */
-
-let cart = JSON.parse(localStorage.getItem("biteboxCart")) || [];
-
-
-/* ============================================================
-   MENU SECTION
-============================================================ */
-
-let menuSection = document.getElementById("menu-items");
-
-
-/* ============================================================
-   ADD TO CART
-============================================================ */
-
-if (menuSection) {
-
-    menuSection.addEventListener("click", function (event) {
-
-        let button = event.target.closest("button");
-
-        if (!button) {
-            return;
-        }
-
-        if (button.classList.contains("add-to-cart")) {
-
-            let card = button.closest("article");
-
-            if (card) {
-                addToCart(card);
-            }
-        }
-    });
-}
-
-
-/* ============================================================
-   ADD ITEM TO CART
-============================================================ */
-
-function addToCart(card) {
-
-    let nameElement = card.querySelector("h3");
-    let priceElement = card.querySelector(".price");
-    let imageElement = card.querySelector("img");
-
-    if (!nameElement || !priceElement || !imageElement) {
-        return;
-    }
-
-    let name = nameElement.textContent.trim();
-
-    let priceText = priceElement.textContent;
-
-    let price = parseFloat(
-        priceText.replace("₹", "").trim()
-    );
-
-    let image = imageElement.getAttribute("src");
-
-    let cartItem = {
-        name: name,
-        price: price,
-        image: image,
-        quantity: 1
-    };
-
-    let existingItem = cart.find(function (item) {
-        return item.name === name;
-    });
-
-    if (existingItem) {
-
-        existingItem.quantity++;
-
-    } else {
-
-        cart.push(cartItem);
-    }
-
-    localStorage.setItem(
-        "biteboxCart",
-        JSON.stringify(cart)
-    );
-
-    renderCart();
-
-    updateOrderSummary();
-
-    updateCartCount();
-
-    console.log("Cart:", cart);
-}
-
-
-/* ============================================================
-   CART TABLE
-============================================================ */
-
-let cartBody = document.querySelector(
-    "#shopping-cart tbody"
-);
-
-
-/* ============================================================
-   RENDER CART
-============================================================ */
-
-function renderCart() {
-
-    if (!cartBody) {
-        return;
-    }
-
-    cartBody.innerHTML = "";
-
-    if (cart.length === 0) {
-
-        let row = document.createElement("tr");
-
-        row.innerHTML = `
-            <td colspan="5">
-                <div class="empty-cart">
-                    <h3>Your Cart is Empty</h3>
-                    <p>Add some delicious food from our Menu!</p>
-                </div>
-            </td>
-        `;
-
-        cartBody.appendChild(row);
-
-        return;
-    }
-
-    cart.forEach(function (item, index) {
-
-        let itemTotal =
-            item.price * item.quantity;
-
-        let row = document.createElement("tr");
-
-        row.innerHTML = `
-            <td>
-                <img
-                    src="${item.image}"
-                    alt="${item.name}"
-                    width="80"
-                >
-                <h3>${item.name}</h3>
-            </td>
-
-            <td>
-                ₹${item.price}
-            </td>
-
-            <td>
-                <div class="quantity-box">
-
-                    <button
-                        type="button"
-                        class="decrease"
-                        data-index="${index}"
-                    >
-                        -
-                    </button>
-
-                    <span>${item.quantity}</span>
-
-                    <button
-                        type="button"
-                        class="increase"
-                        data-index="${index}"
-                    >
-                        +
-                    </button>
-
-                </div>
-            </td>
-
-            <td>
-                ₹${itemTotal.toFixed(2)}
-            </td>
-
-            <td>
-                <a
-                    href="#"
-                    class="remove-item"
-                    data-index="${index}"
-                >
-                    <img
-                        src="Assests/icons/delete.png"
-                        alt="Delete"
-                        width="25"
-                    >
-                </a>
-            </td>
-        `;
-
-        cartBody.appendChild(row);
-    });
-}
-
-
-/* ============================================================
-   INCREASE QUANTITY
-============================================================ */
-
-function increaseQuantity(index) {
-
-    if (!cart[index]) {
-        return;
-    }
-
-    cart[index].quantity++;
-
-    localStorage.setItem(
-        "biteboxCart",
-        JSON.stringify(cart)
-    );
-
-    renderCart();
-    updateOrderSummary();
-    updateCartCount();
-}
-
-
-/* ============================================================
-   DECREASE QUANTITY
-============================================================ */
-
-function decreaseQuantity(index) {
-
-    if (!cart[index]) {
-        return;
-    }
-
-    if (cart[index].quantity > 1) {
-        cart[index].quantity--;
-    }
-
-    localStorage.setItem(
-        "biteboxCart",
-        JSON.stringify(cart)
-    );
-
-    renderCart();
-    updateOrderSummary();
-    updateCartCount();
-}
-
-
-/* ============================================================
-   REMOVE ITEM
-============================================================ */
-
-function removeFromCart(index) {
-
-    if (!cart[index]) {
-        return;
-    }
-
-    cart.splice(index, 1);
-
-    localStorage.setItem(
-        "biteboxCart",
-        JSON.stringify(cart)
-    );
-
-    renderCart();
-    updateOrderSummary();
-    updateCartCount();
-}
-
-
-/* ============================================================
-   CART BUTTON EVENTS
-============================================================ */
-
-if (cartBody) {
-
-    cartBody.addEventListener("click", function (event) {
-
-        let button = event.target.closest("button");
-
-        if (button) {
-
-            let index =
-                parseInt(button.dataset.index);
-
-            if (button.classList.contains("increase")) {
-                increaseQuantity(index);
-            }
-
-            if (button.classList.contains("decrease")) {
-                decreaseQuantity(index);
-            }
-        }
-
-        let link = event.target.closest("a");
-
-        if (
-            link &&
-            link.classList.contains("remove-item")
-        ) {
-
-            event.preventDefault();
-
-            let index =
-                parseInt(link.dataset.index);
-
-            removeFromCart(index);
-        }
-    });
-}
-
-
-/* ============================================================
-   CLEAR CART
-============================================================ */
-
-function clearCart() {
-
-    cart = [];
-
-    localStorage.removeItem("biteboxCart");
-
-    renderCart();
-    updateOrderSummary();
-    updateCartCount();
-}
-
-
-let clearCartButton =
-    document.getElementById("clear-cart");
-
-
-if (clearCartButton) {
-
-    clearCartButton.addEventListener(
-        "click",
-        function () {
-
-            clearCart();
-
-        }
-    );
-}
-
-
-/* ============================================================
-   ORDER SUMMARY
-============================================================ */
-
-function calculateSubtotal() {
-
-    let subtotal = 0;
-
-    cart.forEach(function (item) {
-
-        subtotal +=
-            item.price * item.quantity;
-
-    });
-
-    return subtotal;
-}
-
-
-function calculateDeliveryCharge(subtotal) {
-
-    if (subtotal === 0) {
-        return 0;
-    }
-
-    return 40;
-}
-
-
-function calculatePackagingCharge(subtotal) {
-
-    if (subtotal === 0) {
-        return 0;
-    }
-
-    return 20;
-}
-
-
-function calculateDiscount(subtotal) {
-
-    if (subtotal > 500) {
-
-        return subtotal * 0.10;
-    }
-
-    return 0;
-}
-
-
-function calculateTotal(
-    subtotal,
-    deliveryCharge,
-    packagingCharge,
-    discount
-) {
-
-    return (
-        subtotal +
-        deliveryCharge +
-        packagingCharge -
-        discount
-    );
-}
-
-
-function updateOrderSummary() {
-
-    let subtotal =
-        calculateSubtotal();
-
-    let deliveryCharge =
-        calculateDeliveryCharge(subtotal);
-
-    let packagingCharge =
-        calculatePackagingCharge(subtotal);
-
-    let discount =
-        calculateDiscount(subtotal);
-
-    let total =
-        calculateTotal(
-            subtotal,
-            deliveryCharge,
-            packagingCharge,
-            discount
-        );
-
-
-    let subtotalAmount =
-        document.getElementById(
-            "subtotal-amount"
-        );
-
-    let deliveryAmount =
-        document.getElementById(
-            "delivery-amount"
-        );
-
-    let packagingAmount =
-        document.getElementById(
-            "packaging-amount"
-        );
-
-    let discountAmount =
-        document.getElementById(
-            "discount-amount"
-        );
-
-    let totalAmount =
-        document.getElementById(
-            "total-amount"
-        );
-
-
-    if (subtotalAmount) {
-        subtotalAmount.textContent =
-            "₹" + subtotal.toFixed(2);
-    }
-
-    if (deliveryAmount) {
-        deliveryAmount.textContent =
-            "₹" + deliveryCharge.toFixed(2);
-    }
-
-    if (packagingAmount) {
-        packagingAmount.textContent =
-            "₹" + packagingCharge.toFixed(2);
-    }
-
-    if (discountAmount) {
-        discountAmount.textContent =
-            "-₹" + discount.toFixed(2);
-    }
-
-    if (totalAmount) {
-        totalAmount.textContent =
-            "₹" + total.toFixed(2);
-    }
-}
-
-
-/* ============================================================
-   CART COUNT
-============================================================ */
-
-function updateCartCount() {
-
-    let cartCount = 0;
-
-    cart.forEach(function (item) {
-
-        cartCount += item.quantity;
-
-    });
-
-    let cartCountElement =
-        document.getElementById("cart-count");
-
-    if (cartCountElement) {
-
-        cartCountElement.textContent =
-            cartCount;
-    }
-}
-
-
-/* ============================================================
-   SEARCH
-============================================================ */
-
-let searchInput =
-    document.getElementById("menu-search");
-
-let searchButton =
-    document.getElementById("search-button");
-
-
-function searchMenu(searchText) {
-
-    let searchValue =
-        searchText.trim().toLowerCase();
-
-    let menuCards =
-        document.querySelectorAll(
-            "#menu-items article"
-        );
-
-
-    menuCards.forEach(function (card) {
-
-        let heading =
-            card.querySelector("h3");
-
-        if (!heading) {
-            return;
-        }
-
-        let foodName =
-            heading.textContent
-                .trim()
-                .toLowerCase();
-
-
-        if (foodName.includes(searchValue)) {
-
-            card.style.display = "";
-
-        } else {
-
-            card.style.display = "none";
-        }
-    });
-}
-
-
-if (searchButton && searchInput) {
-
-    searchButton.addEventListener(
-        "click",
-        function () {
-
-            searchMenu(searchInput.value);
-
-        }
-    );
-}
-
-
-if (searchInput) {
-
-    searchInput.addEventListener(
-        "input",
-        function () {
-
-            searchMenu(searchInput.value);
-
-        }
-    );
-}
-
-
-/* ============================================================
-   CATEGORY FILTER
-============================================================ */
-
-let categoryCards =
-    document.querySelectorAll(
-        "#categories article"
-    );
-
-
-function filterMenu(category) {
-
-    let menuCards =
-        document.querySelectorAll(
-            "#menu-items article"
-        );
-
-    let selectedCategory =
-        category.trim().toLowerCase();
-
-
-    menuCards.forEach(function (card) {
-
-        let cardCategory =
-            card.dataset.category;
-
-        if (!cardCategory) {
-            return;
-        }
-
-        cardCategory =
-            cardCategory.trim().toLowerCase();
-
-
-        if (
-            cardCategory ===
-            selectedCategory
-        ) {
-
-            card.style.display = "";
-
-        } else {
-
-            card.style.display = "none";
-        }
-    });
-}
-
-
-categoryCards.forEach(function (card) {
-
-    card.addEventListener(
-        "click",
-        function () {
-
-            let heading =
-                card.querySelector("h3");
-
-            if (!heading) {
-                return;
-            }
-
-            let category =
-                heading.textContent
-                    .trim()
-                    .toLowerCase();
-
-            filterMenu(category);
-        }
-    );
-});
-
-
-/* ============================================================
-   DAY / NIGHT THEME
-============================================================ */
-
-let themeButton =
-    document.getElementById("theme-toggle");
-
-
-function updateThemeButton() {
-
-    if (!themeButton) {
-        return;
-    }
-
-    let themeIcon =
-        themeButton.querySelector(
-            ".theme-icon"
-        );
-
-    let themeText =
-        themeButton.querySelector(
-            ".theme-text"
-        );
-
-
-    if (
-        document.body.classList.contains(
-            "dark-theme"
-        )
-    ) {
-
-        if (themeIcon) {
-            themeIcon.textContent = "☾";
-        }
-
-        if (themeText) {
-            themeText.textContent =
-                "NIGHT MODE";
-        }
-
-    } else {
-
-        if (themeIcon) {
-            themeIcon.textContent = "☀";
-        }
-
-        if (themeText) {
-            themeText.textContent =
-                "DAY MODE";
-        }
-    }
-}
-
-
-function toggleTheme() {
-
-    document.body.classList.toggle(
-        "dark-theme"
-    );
-
-
-    if (
-        document.body.classList.contains(
-            "dark-theme"
-        )
-    ) {
-
-        localStorage.setItem(
-            "biteboxTheme",
-            "dark"
-        );
-
-    } else {
-
-        localStorage.setItem(
-            "biteboxTheme",
-            "light"
-        );
-    }
-
-    updateThemeButton();
-}
-
-
-function loadTheme() {
-
-    let savedTheme =
-        localStorage.getItem(
-            "biteboxTheme"
-        );
-
-
-    document.body.classList.add(
-        "theme-loading"
-    );
-
-
-    if (savedTheme === "dark") {
-
-        document.body.classList.add(
-            "dark-theme"
-        );
-
-    } else {
-
-        document.body.classList.remove(
-            "dark-theme"
-        );
-    }
-
-
-    updateThemeButton();
-
-
-    setTimeout(function () {
-
-        document.body.classList.remove(
-            "theme-loading"
-        );
-
-    }, 50);
-}
-
-
-if (themeButton) {
-
-    themeButton.addEventListener(
-        "click",
-        function () {
-
-            toggleTheme();
-
-        }
-    );
-}
-
-
-loadTheme();
-
-
-/* ============================================================
-   CONTACT FORM
-============================================================ */
-
-let contactForm =
-    document.querySelector(
-        ".right-column form"
-    );
-
-
-function showToast(message, type) {
-
-    let toast =
-        document.createElement("div");
-
-    toast.className =
-        "toast " + type;
-
-    toast.textContent =
-        message;
-
-    document.body.appendChild(toast);
-
-
-    setTimeout(function () {
-
-        toast.classList.add("show");
-
-    }, 100);
-
-
-    setTimeout(function () {
-
-        toast.classList.remove("show");
-
-        setTimeout(function () {
-
-            toast.remove();
-
-        }, 300);
-
-    }, 3000);
-}
-
-
-if (contactForm) {
-
-    contactForm.addEventListener(
-        "submit",
-        function (event) {
-
-            event.preventDefault();
-
-            showToast(
-                "Message sent successfully!",
-                "success"
-            );
-
-            contactForm.reset();
-
-        }
-    );
-}
-
-
-/* ============================================================
-   MOCKAPI
-   ADD / UPDATE MENU ITEM
+   MOCKAPI - ADD / UPDATE MENU ITEM
 ============================================================ */
 
 const API_URL =
     "https://6ac5df0dbea0e72cf5c8261e.mockapi.io/menu";
 
-const addMenuBtn = document.getElementById("add-menu-btn");
-const menuModal = document.getElementById("menu-modal");
-const cancelMenuForm = document.getElementById("cancel-menu-form");
-const menuForm = document.getElementById("menu-form");
-const menuContainer = document.getElementById("menu-container");
+const addMenuBtn =
+    document.getElementById("add-menu-btn");
 
-/*
-    null = Add mode
-    ID   = Update mode
-*/
+const menuModal =
+    document.getElementById("menu-modal");
+
+const cancelMenuForm =
+    document.getElementById("cancel-menu-form");
+
+const menuForm =
+    document.getElementById("menu-form");
+
+/* Use the menu-items section when available */
+const menuDisplayContainer =
+    document.getElementById("menu-items") ||
+    document.getElementById("menu-container");
+
 let editingMenuId = null;
 
 
 /* ============================================================
-   OPEN ADD MENU MODAL
+   OPEN MENU MODAL
+============================================================ */
+
+function openMenuModal() {
+
+    if (!menuModal) return;
+
+    menuModal.hidden = false;
+    menuModal.style.display = "block";
+    menuModal.classList.add("show");
+}
+
+
+/* ============================================================
+   CLOSE MENU MODAL
+============================================================ */
+
+function closeMenuModal() {
+
+    if (menuModal) {
+        menuModal.classList.remove("show");
+        menuModal.style.display = "none";
+        menuModal.hidden = true;
+    }
+
+    editingMenuId = null;
+
+    if (menuForm) {
+        menuForm.reset();
+    }
+
+    const modalTitle =
+        document.querySelector(".modal-header h2");
+
+    const submitButton =
+        menuForm
+            ? menuForm.querySelector("button[type='submit']")
+            : null;
+
+    if (modalTitle) {
+        modalTitle.textContent = "Add Menu Item";
+    }
+
+    if (submitButton) {
+        submitButton.textContent = "Add Menu Item";
+    }
+}
+
+
+/* ============================================================
+   OPEN ADD MENU FORM
 ============================================================ */
 
 if (addMenuBtn) {
@@ -913,38 +86,49 @@ if (addMenuBtn) {
 
         editingMenuId = null;
 
-        menuForm.reset();
+        if (menuForm) {
+            menuForm.reset();
+        }
 
-        document.querySelector(".modal-header h2").textContent =
-            "Add Menu Item";
+        const modalTitle =
+            document.querySelector(".modal-header h2");
 
-        document.querySelector(
-            "#menu-form button[type='submit']"
-        ).textContent =
-            "Add Menu Item";
+        const submitButton =
+            menuForm
+                ? menuForm.querySelector(
+                    "button[type='submit']"
+                )
+                : null;
 
-        menuModal.classList.add("show");
+        if (modalTitle) {
+            modalTitle.textContent = "Add Menu Item";
+        }
+
+        if (submitButton) {
+            submitButton.textContent = "Add Menu Item";
+        }
+
+        openMenuModal();
 
     });
-
 }
 
 
 /* ============================================================
-   CANCEL MODAL
+   CANCEL MENU FORM
 ============================================================ */
+
 if (cancelMenuForm) {
-    cancelMenuForm.addEventListener("click", function () {
 
-        console.log("CANCEL BUTTON CLICKED");
+    cancelMenuForm.addEventListener("click", function (event) {
 
-        menuModal.classList.remove("show");
-        menuModal.style.display = "none";
+        event.preventDefault();
 
-        editingMenuId = null;
-        menuForm.reset();
+        closeMenuModal();
+
     });
 }
+
 
 /* ============================================================
    ADD / UPDATE FORM SUBMIT
@@ -957,22 +141,43 @@ if (menuForm) {
         event.preventDefault();
 
         const name =
-            document.getElementById("menu-name").value;
+            document.getElementById("menu-name").value.trim();
 
         const price =
-            document.getElementById("menu-price").value;
+            Number(document.getElementById("menu-price").value);
 
         const category =
-            document.getElementById("menu-category").value;
+            document.getElementById("menu-category").value.trim();
 
         const rating =
-            document.getElementById("menu-rating").value;
+            Number(document.getElementById("menu-rating").value);
 
         const reviews =
-            document.getElementById("menu-reviews").value;
+            Number(document.getElementById("menu-reviews").value);
 
         const image =
-            document.getElementById("menu-image").value;
+            document.getElementById("menu-image").value.trim();
+
+
+        /* Validate form data */
+
+        if (
+            !name ||
+            !category ||
+            !image ||
+            !Number.isFinite(price) ||
+            price <= 0 ||
+            !Number.isFinite(rating) ||
+            rating < 0 ||
+            rating > 5 ||
+            !Number.isInteger(reviews) ||
+            reviews < 0
+        ) {
+
+            alert("Please enter valid menu item details.");
+
+            return;
+        }
 
 
         const menuItem = {
@@ -985,30 +190,42 @@ if (menuForm) {
         };
 
 
+        const submitButton =
+            menuForm.querySelector("button[type='submit']");
+
+        if (submitButton) {
+            submitButton.disabled = true;
+        }
+
+
         try {
 
-            /* =========================
-               UPDATE MODE
-            ========================= */
+            let response;
+
+            /* UPDATE EXISTING MENU ITEM */
 
             if (editingMenuId !== null) {
 
-                await updateMenuItem(
-                    editingMenuId,
-                    menuItem
-                );
+                response = await fetch(
+                    API_URL + "/" + encodeURIComponent(editingMenuId),
+                    {
+                        method: "PUT",
 
-                editingMenuId = null;
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify(menuItem)
+                    }
+                );
 
             }
 
-            /* =========================
-               ADD MODE
-            ========================= */
+            /* ADD NEW MENU ITEM */
 
             else {
 
-                const response = await fetch(API_URL, {
+                response = await fetch(API_URL, {
 
                     method: "POST",
 
@@ -1020,39 +237,46 @@ if (menuForm) {
 
                 });
 
-
-                if (!response.ok) {
-                    throw new Error("Failed to add menu item");
-                }
-
-
-                const data = await response.json();
-
-                console.log(
-                    "Menu item added:",
-                    data
-                );
-
-                //displayMenuItems([data]);
-
             }
 
 
-            /* =========================
-               CLOSE MODAL
-            ========================= */
+            if (!response.ok) {
+                throw new Error(
+                    "Unable to save menu item. HTTP " +
+                    response.status
+                );
+            }
 
-            menuModal.classList.remove("show");
 
-            menuForm.reset();
+            const savedItem = await response.json();
+
+            console.log("Menu item saved:", savedItem);
+
+
+            await fetchMenuItems();
+
+            closeMenuModal();
+
+            alert(
+                editingMenuId === null
+                    ? "Menu item added successfully!"
+                    : "Menu item updated successfully!"
+            );
 
 
         } catch (error) {
 
-            console.error(
-                "Error saving menu item:",
-                error
+            console.error("Error saving menu item:", error);
+
+            alert(
+                "Could not save menu item. Please check your connection and try again."
             );
+
+        } finally {
+
+            if (submitButton) {
+                submitButton.disabled = false;
+            }
 
         }
 
@@ -1065,136 +289,108 @@ if (menuForm) {
    UPDATE MENU BUTTON
 ============================================================ */
 
-if (menuContainer) {
+if (menuDisplayContainer) {
 
-    menuContainer.addEventListener(
+    menuDisplayContainer.addEventListener(
         "click",
         function (event) {
 
             const button =
                 event.target.closest(".update-menu-btn");
 
+            if (!button) return;
 
-            if (!button) {
+            const card = button.closest("article");
+
+            if (!card || !card.dataset.id) {
+                alert("Menu item ID was not found.");
+                return;
+            }
+
+            const nameElement =
+                card.querySelector("h3");
+
+            const priceElement =
+                card.querySelector(".price");
+
+            const ratingElement =
+                card.querySelector(".rating");
+
+            const reviewsElement =
+                card.querySelector(".rating small");
+
+            const imageElement =
+                card.querySelector("img");
+
+
+            if (
+                !nameElement ||
+                !priceElement ||
+                !ratingElement ||
+                !imageElement
+            ) {
+                console.error(
+                    "Menu card is missing required information."
+                );
+
                 return;
             }
 
 
-            const card =
-                button.closest("article");
+            editingMenuId = card.dataset.id;
 
 
-            if (!card) {
-                return;
-            }
+            /* Fill the form */
 
+            document.getElementById("menu-name").value =
+                nameElement.textContent.trim();
 
-            /* =========================
-               GET MOCKAPI ID
-            ========================= */
-
-            const menuId =
-                card.dataset.id;
-
-
-            editingMenuId = menuId;
-
-
-            console.log(
-                "Editing Menu ID:",
-                editingMenuId
-            );
-
-
-            /* =========================
-               GET CURRENT VALUES
-            ========================= */
-
-            const menuName =
-                card.querySelector("h3")
-                    .textContent
-                    .trim();
-
-
-            const price =
-                card.querySelector(".price")
-                    .textContent
+            document.getElementById("menu-price").value =
+                priceElement.textContent
                     .replace("₹", "")
                     .trim();
 
-
-            const rating =
-                card.querySelector(".rating")
-                    .childNodes[0]
-                    .textContent
-                    .trim();
-
-
-            const reviews =
-                card.querySelector(".rating small")
-                    .textContent
-                    .replace("(", "")
-                    .replace(")", "")
-                    .trim();
-
-
-            const category =
-                card.dataset.category;
-
-
-            const image =
-                card.querySelector("img")
-                    .getAttribute("src");
-
-
-            /* =========================
-               PUT VALUES INTO FORM
-            ========================= */
-
-            document.getElementById("menu-name").value =
-                menuName;
-
-            document.getElementById("menu-price").value =
-                price;
-
             document.getElementById("menu-category").value =
-                category;
+                card.dataset.category || "";
 
             document.getElementById("menu-rating").value =
-                rating;
+                ratingElement.childNodes[0].textContent
+                    .replace("⭐", "")
+                    .trim();
 
             document.getElementById("menu-reviews").value =
-                reviews;
+                reviewsElement
+                    ? reviewsElement.textContent
+                        .replace(/[()]/g, "")
+                        .trim()
+                    : "0";
 
             document.getElementById("menu-image").value =
-                image;
+                imageElement.getAttribute("src") || "";
 
 
-            /* =========================
-               CHANGE MODAL TITLE
-            ========================= */
+            /* Update modal title and button */
 
-            document.querySelector(
-                ".modal-header h2"
-            ).textContent =
-                "Update Menu Item";
+            const modalTitle =
+                document.querySelector(".modal-header h2");
+
+            const submitButton =
+                menuForm
+                    ? menuForm.querySelector(
+                        "button[type='submit']"
+                    )
+                    : null;
+
+            if (modalTitle) {
+                modalTitle.textContent = "Update Menu Item";
+            }
+
+            if (submitButton) {
+                submitButton.textContent = "Update Menu Item";
+            }
 
 
-            /* =========================
-               CHANGE BUTTON
-            ========================= */
-
-            document.querySelector(
-                "#menu-form button[type='submit']"
-            ).textContent =
-                "Update Menu Item";
-
-
-            /* =========================
-               OPEN MODAL
-            ========================= */
-
-            menuModal.classList.add("show");
+            openMenuModal();
 
         }
     );
@@ -1203,52 +399,13 @@ if (menuContainer) {
 
 
 /* ============================================================
-   UPDATE MENU ITEM
+   FETCH MENU ITEMS FROM MOCKAPI
 ============================================================ */
 
-async function updateMenuItem(menuId, menuItem) {
 
-    try {
-
-        const response = await fetch(
-            API_URL + "/" + menuId,
-            {
-                method: "PUT",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify(menuItem)
-            }
-        );
-
-
-        if (!response.ok) {
-            throw new Error("Failed to update menu item");
-        }
-
-
-        const data =
-            await response.json();
-
-
-        console.log(
-            "Menu item updated:",
-            data
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Error updating menu item:",
-            error
-        );
-
-    }
-
-}
+/* ============================================================
+   FETCH MENU ITEMS FROM MOCKAPI
+============================================================ */
 
 async function fetchMenuItems() {
 
@@ -1264,61 +421,535 @@ async function fetchMenuItems() {
 
         console.log("Menu items fetched:", menuItems);
 
-        // Find your menu container
-        const menuContainer =
+        // IMPORTANT: Render inside menu-container,
+        // not inside the entire menu-items section.
+        const container =
             document.getElementById("menu-container");
 
-        if (!menuContainer) {
+        if (!container) {
+            console.error("menu-container was not found in HTML.");
             return;
         }
 
-        // Clear existing API-generated cards
-        menuContainer.innerHTML = "";
+        // Clear only the food cards, preserving the heading.
+       
 
         menuItems.forEach(function (item) {
 
-            const article =
-                document.createElement("article");
+            const article = document.createElement("article");
 
             article.dataset.id = item.id;
-            article.dataset.category = item.category;
+            article.dataset.category =
+                (item.category || "").toLowerCase();
 
-            article.innerHTML = `
-                <img src="${item.image}" alt="${item.name}">
+            const image = document.createElement("img");
+            image.src = item.image || "";
+            image.alt = item.name || "Menu item";
 
-                <h3>${item.name}</h3>
+            const heading = document.createElement("h3");
+            heading.textContent = item.name || "Menu Item";
 
-                <p class="price">₹${item.price}</p>
+            const price = document.createElement("p");
+            price.className = "price";
+            price.textContent = "₹" + item.price;
 
-                <div class="rating">
-                    ${item.rating} ⭐
-                    <small>(${item.reviews})</small>
-                </div>
+            const rating = document.createElement("p");
+            rating.className = "rating";
 
-                <button
-                    type="button"
-                    class="add-to-cart"
-                >
-                    Add to Cart
-                </button>
+            rating.appendChild(
+                document.createTextNode(
+                    "★".repeat(
+                        Math.max(
+                            0,
+                            Math.min(
+                                5,
+                                Math.floor(Number(item.rating) || 0)
+                            )
+                        )
+                    ) + " "
+                )
+            );
 
-                <button
-                    type="button"
-                    class="update-menu-btn"
-                >
-                    Update
-                </button>
-            `;
+            const reviews = document.createElement("small");
+            reviews.textContent =
+                "(" + (item.reviews ?? 0) + ")";
 
-            menuContainer.appendChild(article);
+            rating.appendChild(reviews);
+
+            const actions = document.createElement("div");
+            actions.className = "menu-actions";
+
+            
+            const updateButton = document.createElement("button");
+            updateButton.type = "button";
+            updateButton.className = "update-menu-btn";
+            updateButton.textContent = "Update";
+
+            const addButton = document.createElement("button");
+            addButton.type = "button";
+            addButton.className = "add-to-cart";
+            addButton.textContent = "Add to Cart";
+
+            actions.appendChild(updateButton);
+
+            article.append(
+                image,
+                heading,
+                price,
+                rating,
+                actions,
+                addButton
+            );
+
+            container.appendChild(article);
+
         });
+
+        // Refresh cart information if those functions exist.
+        if (typeof renderCart === "function") {
+            renderCart();
+        }
+
+        if (typeof updateOrderSummary === "function") {
+            updateOrderSummary();
+        }
+
+        if (typeof updateCartCount === "function") {
+            updateCartCount();
+        }
 
     } catch (error) {
 
-        console.error(
-            "Error fetching menu items:",
-            error
-        );
+        console.error("Error fetching menu items:", error);
 
     }
-}fetchMenuItems();
+
+}
+
+/* ============================================================
+   LOAD MENU ITEMS
+============================================================ */
+
+fetchMenuItems();
+
+
+/* =========================================================
+   BITEBOX CART PAGE JAVASCRIPT
+========================================================= */
+
+const CART_STORAGE_KEY = "biteboxCart";
+
+const cartTableBody = document.querySelector("#shopping-cart tbody");
+const cartCountElement = document.getElementById("cart-count");
+const subtotalElement = document.getElementById("subtotal-amount");
+const deliveryElement = document.getElementById("delivery-amount");
+const packagingElement = document.getElementById("packaging-amount");
+const discountElement = document.getElementById("discount-amount");
+const totalElement = document.getElementById("total-amount");
+const clearCartButton = document.getElementById("clear-cart");
+const checkoutButton = document.querySelector("#order-summary button");
+
+/* Initial sample items */
+const sampleCartItems = [
+    {
+        name: "Margherita Pizza",
+        price: 249,
+        image: "Assests/images/MargheritaPizza.png",
+        quantity: 1
+    },
+    {
+        name: "Cheese Burger",
+        price: 189,
+        image: "Assests/images/cheeseBurger1.png",
+        quantity: 2
+    },
+    {
+        name: "Creamy Pasta",
+        price: 199,
+        image: "Assests/images/AlofredapastaCard4.png",
+        quantity: 1
+    }
+];
+
+/* Load cart */
+function getCartItems() {
+    try {
+        const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+
+        if (savedCart === null) {
+            localStorage.setItem(
+                CART_STORAGE_KEY,
+                JSON.stringify(sampleCartItems)
+            );
+
+            return sampleCartItems.map(item => ({ ...item }));
+        }
+
+        const items = JSON.parse(savedCart);
+        return Array.isArray(items) ? items : [];
+    } catch (error) {
+        console.error("Unable to load cart:", error);
+        return [];
+    }
+}
+
+let cartItems = getCartItems();
+
+/* Save cart */
+function saveCartItems() {
+    localStorage.setItem(
+        CART_STORAGE_KEY,
+        JSON.stringify(cartItems)
+    );
+}
+
+/* Format price */
+function formatPrice(amount) {
+    return "₹" + amount.toFixed(2);
+}
+
+/* Create text element safely */
+function createTextElement(tag, className, text) {
+    const element = document.createElement(tag);
+
+    if (className) {
+        element.className = className;
+    }
+
+    element.textContent = text;
+    return element;
+}
+
+/* Calculate subtotal */
+function getSubtotal() {
+    return cartItems.reduce(function (sum, item) {
+        return sum +
+            (Number(item.price) || 0) *
+            (Number(item.quantity) || 1);
+    }, 0);
+}
+
+/* Update order summary */
+function updateCartSummary() {
+    const subtotal = getSubtotal();
+
+    const delivery = subtotal === 0
+        ? 0
+        : subtotal >= 499 ? 0 : 40;
+
+    const packaging = subtotal === 0 ? 0 : 10;
+
+    const discount = 0;
+    const total = subtotal + delivery + packaging;
+
+    if (subtotalElement) {
+        subtotalElement.textContent = formatPrice(subtotal);
+    }
+
+    if (deliveryElement) {
+        deliveryElement.textContent = formatPrice(delivery);
+    }
+
+    if (packagingElement) {
+        packagingElement.textContent = formatPrice(packaging);
+    }
+
+    if (discountElement) {
+        discountElement.textContent = formatPrice(discount);
+    }
+
+    if (totalElement) {
+        totalElement.textContent = formatPrice(total);
+    }
+
+    const summaryLabel = document.querySelector(
+        "#order-summary p span:first-child"
+    );
+
+    if (summaryLabel) {
+        const totalQuantity = cartItems.reduce(function (sum, item) {
+            return sum + (Number(item.quantity) || 1);
+        }, 0);
+
+        summaryLabel.textContent =
+            "Subtotal (" + totalQuantity + " Items)";
+    }
+
+    if (cartCountElement) {
+        cartCountElement.textContent = cartItems.reduce(
+            (sum, item) => sum + (Number(item.quantity) || 1),
+            0
+        );
+    }
+
+    if (checkoutButton) {
+        checkoutButton.disabled = cartItems.length === 0;
+    }
+
+    return {
+        subtotal: subtotal,
+        delivery: delivery,
+        packaging: packaging,
+        discount: discount,
+        total: total
+    };
+}
+
+/* Display cart items */
+function displayCartItems() {
+    if (!cartTableBody) return;
+
+    cartTableBody.replaceChildren();
+
+    if (cartItems.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 5;
+        cell.textContent = "Your cart is empty. Start shopping!";
+        cell.style.textAlign = "center";
+        cell.style.padding = "30px";
+
+        row.appendChild(cell);
+        cartTableBody.appendChild(row);
+
+        updateCartSummary();
+        return;
+    }
+
+    cartItems.forEach(function (item, index) {
+        const row = document.createElement("tr");
+
+        /* Item details */
+        const itemCell = document.createElement("td");
+
+        const image = document.createElement("img");
+        image.src = item.image || "";
+        image.alt = item.name || "Food item";
+        image.width = 80;
+
+        const heading = createTextElement(
+            "h3",
+            "",
+            item.name || "Menu Item"
+        );
+
+        itemCell.append(image, heading);
+
+        /* Price */
+        const priceCell = createTextElement(
+            "td",
+            "",
+            formatPrice(Number(item.price) || 0)
+        );
+
+        /* Quantity controls */
+        const quantityCell = document.createElement("td");
+
+        const minusButton = createTextElement("button", "", "−");
+        minusButton.type = "button";
+        minusButton.dataset.action = "decrease";
+        minusButton.dataset.index = index;
+
+        const quantity = createTextElement(
+            "span",
+            "cart-quantity",
+            String(Number(item.quantity) || 1)
+        );
+
+        quantity.style.margin = "0 12px";
+
+        const plusButton = createTextElement("button", "", "+");
+        plusButton.type = "button";
+        plusButton.dataset.action = "increase";
+        plusButton.dataset.index = index;
+
+        quantityCell.append(
+            minusButton,
+            quantity,
+            plusButton
+        );
+
+        /* Item total */
+        const itemTotal =
+            (Number(item.price) || 0) *
+            (Number(item.quantity) || 1);
+
+        const totalCell = createTextElement(
+            "td",
+            "",
+            formatPrice(itemTotal)
+        );
+
+        /* Delete button */
+        const actionCell = document.createElement("td");
+        const deleteButton = document.createElement("button");
+
+        deleteButton.type = "button";
+        deleteButton.className = "cart-delete-button";
+        deleteButton.dataset.action = "delete";
+        deleteButton.dataset.index = index;
+        deleteButton.setAttribute("aria-label", "Delete item");
+
+        const deleteImage = document.createElement("img");
+        deleteImage.src = "Assests/icons/delete.png";
+        deleteImage.alt = "Delete";
+        deleteImage.width = 25;
+
+        deleteButton.appendChild(deleteImage);
+        actionCell.appendChild(deleteButton);
+
+        row.append(
+            itemCell,
+            priceCell,
+            quantityCell,
+            totalCell,
+            actionCell
+        );
+
+        cartTableBody.appendChild(row);
+    });
+
+    updateCartSummary();
+}
+
+/* Quantity and delete button actions */
+if (cartTableBody) {
+    cartTableBody.addEventListener("click", function (event) {
+        const button = event.target.closest("button[data-action]");
+
+        if (!button) return;
+
+        const index = Number(button.dataset.index);
+        const action = button.dataset.action;
+
+        if (!Number.isInteger(index) || !cartItems[index]) return;
+
+        if (action === "increase") {
+            cartItems[index].quantity =
+                (Number(cartItems[index].quantity) || 1) + 1;
+        }
+
+        if (action === "decrease") {
+            const quantity = Number(cartItems[index].quantity) || 1;
+
+            if (quantity > 1) {
+                cartItems[index].quantity = quantity - 1;
+            } else {
+                if (!confirm("Remove this item from your cart?")) return;
+
+                cartItems.splice(index, 1);
+            }
+        }
+
+        if (action === "delete") {
+            if (!confirm("Remove this item from your cart?")) return;
+
+            cartItems.splice(index, 1);
+        }
+
+        saveCartItems();
+        displayCartItems();
+    });
+}
+
+/* Clear entire cart */
+if (clearCartButton) {
+    clearCartButton.addEventListener("click", function () {
+        if (cartItems.length === 0) {
+            alert("Your cart is already empty.");
+            return;
+        }
+
+        if (!confirm("Are you sure you want to clear your cart?")) {
+            return;
+        }
+
+        cartItems = [];
+        saveCartItems();
+        displayCartItems();
+    });
+}
+
+/* Checkout summary */
+if (checkoutButton) {
+    checkoutButton.addEventListener("click", function () {
+        if (cartItems.length === 0) {
+            alert("Your cart is empty.");
+            return;
+        }
+
+        const summary = updateCartSummary();
+
+        alert(
+            "Your Order Summary\n\n" +
+            "Subtotal: " + formatPrice(summary.subtotal) + "\n" +
+            "Delivery: " + formatPrice(summary.delivery) + "\n" +
+            "Packaging: " + formatPrice(summary.packaging) + "\n" +
+            "Total Amount: " + formatPrice(summary.total) +
+            "\n\nCheckout and payment are not connected yet."
+        );
+    });
+}
+
+/* Initialize cart */
+displayCartItems();
+
+/* ADD TO CART - ORIGINAL AND MOCKAPI MENU CARDS */
+
+document.addEventListener("click", function (event) {
+    const button = event.target.closest(".add-to-cart");
+
+    if (!button) return;
+
+    const card = button.closest("article");
+
+    if (!card) return;
+
+    const name = card.querySelector("h3")?.textContent.trim();
+
+    const priceText = card.querySelector(".price")?.textContent || "";
+    const price = Number(priceText.replace(/[^\d.]/g, ""));
+
+    const image = card.querySelector("img")?.getAttribute("src") || "";
+
+    if (!name || !Number.isFinite(price) || price <= 0) {
+        alert("Unable to add this item. Please check its name and price.");
+        return;
+    }
+
+    let cart = [];
+
+    try {
+        cart = JSON.parse(localStorage.getItem("biteboxCart")) || [];
+        if (!Array.isArray(cart)) cart = [];
+    } catch (error) {
+        cart = [];
+    }
+
+    const existingItem = cart.find(item => item.name === name);
+
+    if (existingItem) {
+        existingItem.quantity = (Number(existingItem.quantity) || 1) + 1;
+    } else {
+        cart.push({
+            name: name,
+            price: price,
+            image: image,
+            quantity: 1
+        });
+    }
+
+    localStorage.setItem("biteboxCart", JSON.stringify(cart));
+
+    const cartCount = document.getElementById("cart-count");
+
+    if (cartCount) {
+        cartCount.textContent = cart.reduce(
+            (sum, item) => sum + (Number(item.quantity) || 1),
+            0
+        );
+    }
+
+    alert(name + " added to cart successfully!");
+});

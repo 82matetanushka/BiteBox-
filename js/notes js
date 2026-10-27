@@ -1410,3 +1410,21 @@ renderCart();
 updateOrderSummary();
 
 updateCartCount();
+
+
+
+/* ============================================================
+   CANCEL MODAL
+============================================================ */
+if (cancelMenuForm) {
+    cancelMenuForm.addEventListener("click", function () {
+
+        console.log("CANCEL BUTTON CLICKED");
+
+        menuModal.classList.remove("show");
+        menuModal.style.display = "none";
+
+        editingMenuId = null;
+        menuForm.reset();
+    });
+}
